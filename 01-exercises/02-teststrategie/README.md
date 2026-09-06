@@ -34,6 +34,7 @@
 * **Testobjekt:** Europcar Switzerland, https://www.europcar.ch
 * **Testart:** functional Black-Box tests
 * **Testumgebung:** Windows 11, Chrome
+#### Testfälle
 | ID | Description | Expected Result | Acctual Resultat |
 |---|---|---|---|
 | 1 | Search for available cars with valid input: pickup "Zürich Flughafen", pickup 15.09.2026 10:00, return 18.09.2026 10:00 | A list of available vehicle categories is shown, each with a price for the 3-day period. Chosen location and dates are displayed unchanged. | |
@@ -132,31 +133,3 @@ Viele Resultate der Testefälle wiederhollen sich. Also habe ich diese Tabelle e
 * Offensichtlich ist ja der Bank Code nicht komplett fert und es ist auch nur ein Beispielprojekt, also wäre es verkehrt alles zu beurteilen. Deswegen zäghle ich nicht alle Best PRactices auf die mir so einfallen, wie z. B. dass man nicht umbedingt einen public leeren constructor auschreiben muss.
 * Wenn man String inputs bekommt, immer noch trim machen. Sonst wird ein Lehrzeichen am ende der Eingabe als andere Eingabe angesehen. Das führt zu fehlern "EUR " ist dann nicht das gleiche wie "EUR".
 * Farben verwenden, z.B. error messages stechen mehr raus wenn sie rot gefärbt sind.
-
-
-
-
-
-
-
-### Ergänzungen zu den Best Practices (aus der Code-Sicht)
-
-* `Account.counter` ist `static`. Die Kontonummern laufen dadurch global über alle Bank-Instanzen
-  weiter und werden nie zurückgesetzt. Für Tests ist das schlecht, weil die Testfälle dann
-  voneinander abhängen: das Resultat hängt davon ab, wie viele Konten vorher erstellt wurden.
-* `deposit()` und `withdraw()` prüfen den Betrag nicht auf negative Werte. Ein negativer
-  Abhebungsbetrag erhöht den Kontostand.
-* `convertCurrency()` deckt nur 3 von 6 möglichen Währungskombinationen ab. Die restlichen
-  laufen still in den Default-Fall und geben den Betrag unverändert zurück.
-* Die Kurse sind fest im Code als Konstanten hinterlegt und nicht konsistent
-  (CHF nach USD und zurück ergibt nicht wieder den Ausgangsbetrag).
-* `convertCurrency()` ist `private` und lässt sich daher von aussen nicht direkt testen.
-  Für White-Box-Tests müsste die Sichtbarkeit mindestens auf package-private gesetzt werden.
-* Der API-Key von apilayer.com steht im Klartext im Quellcode. Solche Secrets gehören in eine
-  Konfigurationsdatei oder Umgebungsvariable, nicht ins Repository.
-* `catch (Exception e)` fängt alles ab und unterscheidet danach mit `instanceof`. Besser wäre,
-  die konkreten Exception-Typen direkt in eigenen catch-Blöcken zu behandeln.
-* Tippfehler im Klassennamen `AccountExeption` (richtig: `AccountException`). Zudem ist sie eine
-  innere Klasse von `Counter` und gehört in ein eigenes File.
-* `ExchangeRateOkhttp` ruft direkt eine externe API auf. Für Unit-Tests müsste diese
-  Schnittstelle weggemockt werden, sonst hängen die Tests von Netzwerk und Fremdsystem ab.
