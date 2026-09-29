@@ -25,4 +25,4 @@
 
 
 ## Aufgabe 3)
-Schau ins Projekt: CarSalesPriceCalculator
+[Schau hier ins Projekt](./CarSalesPriceCalculator/)
