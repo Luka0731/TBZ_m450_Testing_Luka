@@ -4,7 +4,7 @@
 
 ### Übung 1 - 3
 [Hier ist das Projekt für Block 5](./fullstack-project/)
-#### konrette umsetztung
+#### Testing Frameworks
 - Postgress 
 - Selenium
 - JMeter
