@@ -1,0 +1,533 @@
+{
+  "info": {
+    "name": "M450 – Students REST API",
+    "description": "Übung 1 (Automation Testing): Automatisierte Tests für die REST-Schnittstelle des Spring Boot Backends.\n\nAusführen in Postman: Collection → Run.\nAusführen auf der Kommandozeile: `npx newman run M450-Students-API.postman_collection.json -e local.postman_environment.json`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "newName",
+      "value": ""
+    },
+    {
+      "key": "newEmail",
+      "value": ""
+    },
+    {
+      "key": "newId",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('[global] Antwortzeit unter 1000 ms', function () {",
+          "  pm.expect(pm.response.responseTime).to.be.below(1000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1 – Smoke Tests",
+      "item": [
+        {
+          "name": "GET alle Studenten",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            },
+            "description": "Holt alle Studenten. Nach dem Start existieren die 5 Seed-Studenten aus StudentApplication#init."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type ist JSON', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "const students = pm.response.json();",
+                  "",
+                  "pm.test('Antwort ist ein Array mit mindestens 5 Einträgen', function () {",
+                  "  pm.expect(students).to.be.an('array');",
+                  "  pm.expect(students.length).to.be.at.least(5);",
+                  "});",
+                  "",
+                  "pm.test('Seed-Studenten sind vorhanden', function () {",
+                  "  const names = students.map(s => s.name);",
+                  "  ['Jonas', 'Patrick', 'Yves', 'Peter', 'Ann'].forEach(n => {",
+                  "    pm.expect(names).to.include(n);",
+                  "  });",
+                  "});",
+                  "",
+                  "pm.test('Seed-E-Mail folgt dem Muster name@tbz.ch', function () {",
+                  "  const jonas = students.find(s => s.name === 'Jonas');",
+                  "  pm.expect(jonas.email).to.equal('jonas@tbz.ch');",
+                  "});",
+                  "",
+                  "pm.test('Jeder Student hat id (number), name und email (string)', function () {",
+                  "  students.forEach(s => {",
+                  "    pm.expect(s).to.have.property('id');",
+                  "    pm.expect(s.id).to.be.a('number');",
+                  "    pm.expect(s.name).to.be.a('string');",
+                  "    pm.expect(s.email).to.be.a('string');",
+                  "  });",
+                  "});",
+                  "",
+                  "pm.test('IDs sind eindeutig', function () {",
+                  "  const ids = students.map(s => s.id);",
+                  "  pm.expect(new Set(ids).size).to.equal(ids.length);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 – Student anlegen (Happy Path)",
+      "item": [
+        {
+          "name": "POST neuen Studenten erstellen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            },
+            "description": "Legt einen Studenten mit eindeutigem Namen an. Wird die Collection mit einer Datendatei (-d students.csv) gestartet, kommen Name/E-Mail aus der CSV (Data-driven Testing).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newName}}\",\n  \"email\": \"{{newEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Data-driven: Werte aus CSV verwenden, sonst eindeutige Werte generieren",
+                  "const ts = Date.now();",
+                  "const csvName = pm.iterationData.get('name');",
+                  "const csvEmail = pm.iterationData.get('email');",
+                  "// Zeitstempel anhängen, damit der Name auch bei mehreren Läufen eindeutig ist",
+                  "pm.collectionVariables.set('newName', csvName ? csvName + ' ' + ts : 'Postman-' + ts);",
+                  "pm.collectionVariables.set('newEmail', csvEmail || 'postman.' + ts + '@tbz.ch');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Antwort hat keinen Body (Controller-Methode ist void)', function () {",
+                  "  pm.expect(pm.response.text()).to.equal('');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Liste enthält neuen Studenten",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const students = pm.response.json();",
+                  "const name = pm.collectionVariables.get('newName');",
+                  "const created = students.find(s => s.name === name);",
+                  "",
+                  "pm.test('Neu erstellter Student ist in der Liste', function () {",
+                  "  pm.expect(created).to.exist;",
+                  "});",
+                  "",
+                  "pm.test('E-Mail wurde korrekt gespeichert', function () {",
+                  "  pm.expect(created.email).to.equal(pm.collectionVariables.get('newEmail'));",
+                  "});",
+                  "",
+                  "pm.test('Server hat eine ID > 0 vergeben', function () {",
+                  "  pm.expect(created.id).to.be.above(0);",
+                  "  pm.collectionVariables.set('newId', created.id);",
+                  "});",
+                  "",
+                  "pm.test('Neuer Student hat die höchste ID', function () {",
+                  "  const maxId = Math.max(...students.map(s => s.id));",
+                  "  pm.expect(created.id).to.equal(maxId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 – Negativ- und Randfälle",
+      "item": [
+        {
+          "name": "POST mit kaputtem JSON → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Kaputt\", \"email\": ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST mit falschem Content-Type → 415",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "name=Hans"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 415 Unsupported Media Type', function () {",
+                  "  pm.response.to.have.status(415);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /students → 405",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 405 Method Not Allowed (kein DELETE-Endpunkt)', function () {",
+                  "  pm.response.to.have.status(405);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /students/{id} → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                "1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 (kein Endpunkt für einzelne Studenten)', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST leerer Student {} → wird akzeptiert (Befund)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            },
+            "description": "Ist-Verhalten dokumentieren: Das Backend hat keine Validierung. Ein leerer Student wird mit 200 gespeichert. Soll-Verhalten wäre 400 Bad Request (z. B. via @Valid + @NotBlank/@Email).",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('BEFUND: Leerer Student wird ohne Validierung gespeichert (200 statt 400)', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 – CORS (Angular-Frontend)",
+      "item": [
+        {
+          "name": "GET mit Origin localhost:4200 → erlaubt",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://localhost:4200"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Access-Control-Allow-Origin erlaubt das Angular-Frontend', function () {",
+                  "  pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.equal('http://localhost:4200');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Preflight OPTIONS für POST → erlaubt",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://localhost:4200"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "content-type"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('POST ist in Access-Control-Allow-Methods', function () {",
+                  "  pm.expect(pm.response.headers.get('Access-Control-Allow-Methods')).to.include('POST');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET mit fremder Origin → 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://evil.example.com"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 403 – fremde Websites dürfen die API nicht aufrufen', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
