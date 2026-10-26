@@ -1,16 +1,18 @@
 name: Recipe Planner Backend CI
 
-on: push
+on:
+  push:
+  workflow_dispatch:
 
 env:
   MAVEN_CLI_OPTS: "--batch-mode --no-transfer-progress"
+  REPORT_DIR: 07-ci-cd-pipeline-and-deployment-environment/recipe-planner-backend/target/site/
 
 defaults:
   run:
     working-directory: 07-ci-cd-pipeline-and-deployment-environment/recipe-planner-backend
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
@@ -37,7 +39,11 @@ jobs:
         if: always()
         with:
           name: test-reports
-          path: 07-ci-cd-pipeline-and-deployment-environment/recipe-planner-backend/target/site/
+          path: ${{ env.REPORT_DIR }}
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: ${{ env.REPORT_DIR }}
 
   deploy:
     needs: test
@@ -48,11 +54,4 @@ jobs:
       id-token: write
     environment: github-pages
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: test-reports
-          path: public
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: public
       - uses: actions/deploy-pages@v4
