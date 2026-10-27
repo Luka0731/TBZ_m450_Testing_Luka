@@ -15,7 +15,6 @@
 class MyFancyClass
 {
     public function shortString($text, $length, $ending = '...') {
-        // mb_ Funktionen zählen Zeichen statt Bytes, sonst ist "ä" 2 Zeichen lang
         if (mb_strlen($ending) > $length) {
             return false;
         }
@@ -30,7 +29,6 @@ class MyFancyClass
             return 0;
         }
         foreach ($values as $value) {
-            // z.B. "bestanden" kann man nicht verrechnen
             if (!is_numeric($value)) {
                 return false;
             }
@@ -39,7 +37,6 @@ class MyFancyClass
     }
 
     public function getOpposite($value, $delimiter = ',') {
-        // Array wird zum String, String wird zum Array
         if (is_array($value)) {
             return implode($delimiter, $value);
         }
