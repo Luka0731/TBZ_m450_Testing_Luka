@@ -4,10 +4,7 @@ import ch.tbz.m450.repository.Address;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static ch.tbz.m450.util.SortField.*;
@@ -111,5 +108,28 @@ class AddressComparatorTest {
         addresses.sort(comparator);
 
         assertEquals(List.of(peter, anna, lisa), addresses);
+    }
+
+    @Test
+    void sortListOfNames() {
+        List<Address> addresses = new ArrayList<>();
+        addresses.add(new Address(1, "Tom", "Zimmermann", "0791111111", new Date()));
+        addresses.add(new Address(2, "Sara", "Keller", "0792222222", new Date()));
+        addresses.add(new Address(3, "Ben", "Keller", "0793333333", new Date()));
+        addresses.add(new Address(4, "Mia", "Huber", "0794444444", new Date()));
+        addresses.add(new Address(5, "Luca", "Brunner", "0795555555", new Date()));
+        addresses.sort(comparator);
+        List<String> sortedNames = addresses
+                .stream()
+                .map(a -> a.getFirstname() + " " + a.getLastname())
+                .toList();
+
+        assertEquals(List.of(
+                "Luca Brunner",
+                "Mia Huber",
+                "Ben Keller",
+                "Sara Keller",
+                "Tom Zimmermann"
+        ), sortedNames);
     }
 }

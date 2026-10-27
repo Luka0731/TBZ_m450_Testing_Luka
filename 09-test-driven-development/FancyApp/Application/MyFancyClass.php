@@ -10,6 +10,8 @@
  * of PHP and how to use them.
  */
 
+
+
 class MyFancyClass
 {
     public function shortString($text, $length, $ending = '...') {

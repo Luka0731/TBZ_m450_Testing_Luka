@@ -11,6 +11,8 @@ require_once(__DIR__ . '/../Application/MyFancyClass.php');
 // for newer PHPUnit uncomment this line
 use PHPUnit\Framework\TestCase;
 
+
+
 class Test extends TestCase // for newer PHPUnit: TestCase; for older PHPUnit: PHPUnit_Framework_TestCase
 {
     private $_myFancyClass;
